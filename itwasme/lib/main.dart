@@ -10,10 +10,10 @@ import 'package:http/http.dart' as http;
 import 'package:flutter_circular_chart/flutter_circular_chart.dart';
 import 'dart:convert';
 import 'package:gradient_widgets/gradient_widgets.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 void main() {
   runApp(new MaterialApp(
-    theme: ThemeData(fontFamily: 'RobotoMono'),
     home: new ItWasMe(),
   ));
 }
@@ -27,15 +27,44 @@ class ItWasMe extends StatefulWidget {
 
 class ItWasMeState extends State<ItWasMe> {
 
-  int counter = 0;
-  List<String> strings = ['Flutter', 'is', 'cool', "and","awesome!"];
-  String displayedString = "Hello World!";
-
   Map data;
   String _id = "0";
   String _percentages = "0";
   String _room = "room1";
   String _lifetimeResets = "0";
+
+  Timer timer;
+
+  @override
+  void initState() {
+    super.initState();
+    timer = Timer.periodic(Duration(seconds: 2), (Timer t) => getData());
+    getData();
+  }
+
+  void _showDialog() {
+    // flutter defined function
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        // return object of type Dialog
+        return AlertDialog(
+          title: new Text("Toilet paper low"),
+          content: new Text("Your mum would like you to change the toilet paper."),
+          actions: <Widget>[
+            // usually buttons at the bottom of the dialog
+            new FlatButton(
+              child: new Text("Close"),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
 
   Future getData() async {
     http.Response response = await http.get("https://6c68e4ab.ngrok.io/v1/paper/17");
@@ -72,20 +101,7 @@ class ItWasMeState extends State<ItWasMe> {
     print("fv2 $_percentages");
   }
 
- Timer timer;
 
-  @override
-  void initState() {
-    super.initState();
-    timer = Timer.periodic(Duration(seconds: 2), (Timer t) => getData());
-   getData();
-  }
-  void onPressOfButton() {
-    setState(() {
-      displayedString = strings[counter];
-      counter = counter < 4 ? counter + 1 : 0;
-    });
-  }
   String _currentImage = "assets/fullRolca.png";
   void currentImage() {
     int perc = int.parse(_percentages);
@@ -96,8 +112,10 @@ class ItWasMeState extends State<ItWasMe> {
       _currentImage =  "assets/fullRolca.png";
     }else if (perc < 50 && perc >= 25) {
       _currentImage =  "assets/rollingRolca2.png";
-    }else {
+    }else if (perc < 25 && perc >= 1) {
       _currentImage =  "assets/emptyRolca2.png";
+    }else {
+      _showDialog();
     }
   }
 
@@ -131,7 +149,7 @@ class ItWasMeState extends State<ItWasMe> {
                             height: 30,
                             color: Colors.white,
                           ),
-                          callback: resetPercentages,
+                          callback: _showDialog,
                           gradient: Gradients.rainbowBlue,
                           increaseWidthBy: 40,
                           increaseHeightBy: 40,
